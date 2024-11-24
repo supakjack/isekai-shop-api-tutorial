@@ -2,26 +2,26 @@ package repository
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/supakjack/isekai-shop-api-tutorial/databases"
 	"github.com/supakjack/isekai-shop-api-tutorial/entities"
-	"gorm.io/gorm"
 
 	_itemShopException "github.com/supakjack/isekai-shop-api-tutorial/pkg/itemShop/exception"
 	_itemShopModel "github.com/supakjack/isekai-shop-api-tutorial/pkg/itemShop/model"
 )
 
 type itemShopRepositoryImpl struct {
-	db     *gorm.DB
+	db     databases.Database
 	logger echo.Logger
 }
 
-func NewItemShopRepositoryImpl(db *gorm.DB, logger echo.Logger) ItemShopRepository {
+func NewItemShopRepositoryImpl(db databases.Database, logger echo.Logger) ItemShopRepository {
 	return &itemShopRepositoryImpl{db, logger}
 }
 
 func (r *itemShopRepositoryImpl) Listing(itemFilter *_itemShopModel.ItemFilter) ([]*entities.Item, error) {
 	itemList := make([]*entities.Item, 0)
 
-	query := r.db.Model(&entities.Item{}).Where("is_archive = ?", false)
+	query := r.db.Connect().Model(&entities.Item{}).Where("is_archive = ?", false)
 
 	if itemFilter.Name != "" {
 		query = query.Where("name ilike ?", "%"+itemFilter.Name+"%")
@@ -43,7 +43,7 @@ func (r *itemShopRepositoryImpl) Listing(itemFilter *_itemShopModel.ItemFilter) 
 }
 
 func (r *itemShopRepositoryImpl) Counting(itemFilter *_itemShopModel.ItemFilter) (int64, error) {
-	query := r.db.Model(&entities.Item{}).Where("is_archive = ?", false)
+	query := r.db.Connect().Model(&entities.Item{}).Where("is_archive = ?", false)
 
 	if itemFilter.Name != "" {
 		query = query.Where("name ilike ?", "%"+itemFilter.Name+"%")
@@ -57,8 +57,20 @@ func (r *itemShopRepositoryImpl) Counting(itemFilter *_itemShopModel.ItemFilter)
 
 	if err := query.Count(&count).Error; err != nil {
 		r.logger.Errorf("Counting items Failed : %s", err.Error())
-		return -1, &_itemShopException.ItemListing{}
+		return -1, &_itemShopException.ItemCounting{}
 	}
 
 	return count, nil
+}
+
+func (r *itemShopRepositoryImpl) FindById(itemID uint64) (*entities.Item, error) {
+	item := new(entities.Item)
+
+	err := r.db.Connect().First(item, itemID).Error
+	if err != nil {
+		r.logger.Errorf("Failed to find item by ID : %s", err.Error())
+		return nil, &_itemShopException.ItemNotFound{ItemID: itemID}
+	}
+
+	return item, nil
 }

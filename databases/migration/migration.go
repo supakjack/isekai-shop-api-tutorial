@@ -13,9 +13,9 @@ func main() {
 	conf := config.ConfigGetting()
 	db := databases.NewPostgresDatabase(conf.Database)
 
-	fmt.Println(db.ConnectionGetting())
+	fmt.Println(db.Connect())
 
-	tx := db.ConnectionGetting().Begin()
+	tx := db.Connect().Begin()
 
 	playerMigration(tx)
 	adminMigration(tx)
