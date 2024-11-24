@@ -1,2 +1,5 @@
+# Ignore temporary files and folders
 /tmp
-/config/config.yaml
+
+# Ignore specific configuration file
+*/config/config.yaml
