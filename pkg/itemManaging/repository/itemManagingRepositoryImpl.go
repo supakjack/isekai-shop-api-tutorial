@@ -23,7 +23,7 @@ func (r *itemManagingRepositoryImpl) Creating(itemEntity *entities.Item) (*entit
 
 	if err != nil {
 		r.logger.Errorf("Creating item failed: %s", err.Error())
-		return nil, err
+		return nil, &_itemManagingException.ItemCreating{}
 	}
 
 	return item, nil
